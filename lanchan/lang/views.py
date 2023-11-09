@@ -1,41 +1,28 @@
-import streamlit as st
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import (SystemMessage, HumanMessage, AIMessage)
 
 
 def main():
-    llm = ChatOpenAI(temperature=0)
+    # OpenAIのモデルのインスタンスを作成
+    chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-    st.set_page_config(
-        page_title="My Great ChatGPT",
-        page_icon="🤗"
+    # プロンプトのテンプレート文章を定義
+    template = """
+    次の文章に誤字がないか調べて。誤字があれば訂正してください。
+    {sentences_before_check}
+    """
+
+    # テンプレート文章にあるチェック対象の単語を変数化
+    prompt = PromptTemplate(
+    input_variables=["sentences_before_check"],
+    template=template,
     )
-    st.header("My Great ChatGPT 🤗")
 
-    # チャット履歴の初期化
-    if "messages" not in st.session_state:
-        st.session_state.messages = [
-            SystemMessage(content="You are a helpful assistant.")
-        ]
+    # OpenAIのAPIにこのプロンプトを送信するためのチェーンを作成
+    chain = LLMChain(llm=chat, prompt=prompt,verbose=True)
 
-    # ユーザーの入力を監視
-    if user_input := st.chat_input("聞きたいことを入力してね！"):
-        st.session_state.messages.append(HumanMessage(content=user_input))
-        with st.spinner("ChatGPT is typing ..."):
-            response = llm(st.session_state.messages)
-        st.session_state.messages.append(AIMessage(content=response.content))
-
-    # チャット履歴の表示
-    messages = st.session_state.get('messages', [])
-    for message in messages:
-        if isinstance(message, AIMessage):
-            with st.chat_message('assistant'):
-                st.markdown(message.content)
-        elif isinstance(message, HumanMessage):
-            with st.chat_message('user'):
-                st.markdown(message.content)
-        else:  # isinstance(message, SystemMessage):
-            st.write(f"System message: {message.content}")
+    # チェーンを実行し、結果を表示
+    print(chain("こんんんちわ、真純です。")['text'])
 
 
 if __name__ == '__main__':
